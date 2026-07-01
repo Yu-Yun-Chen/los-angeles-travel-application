@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="LA Trip" />
+  <title>LA Trip 2026</title>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <!-- SortableJS -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, doc, setDoc, getDoc, getDocs,
+      addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    import { FIREBASE_CONFIG } from "./firebase-config.js";
+    import { CHECKLIST_ITEMS } from "./data/checklist.js";
+
+    const app = initializeApp(FIREBASE_CONFIG);
+    const db = getFirestore(app);
+
+    window.__db = db;
+    window.__fs = {
+      collection, doc, setDoc, getDoc, getDocs,
+      addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy
+    };
+    window.__checklist = CHECKLIST_ITEMS;
+
+    // 等 DOM 載入後啟動 app
+    document.addEventListener("DOMContentLoaded", () => {
+      initApp();
+    });
+  </script>
+
+  <link rel="stylesheet" href="style.css?v=2" />
+</head>
+<body>
+  <!-- 頁面容器 -->
+  <div id="app">
+
+    <!-- 行前準備 -->
+    <section id="page-checklist" class="page active">
+      <div class="page-header">
+        <div class="header-icon yellow"><i data-lucide="clipboard-list"></i></div>
+        <h1>行前準備</h1>
+      </div>
+      <div class="page-content">
+        <!-- 航班資訊 -->
+        <div class="flight-card">
+          <div class="flight-row outbound">
+            <div class="flight-direction">去程</div>
+            <div class="flight-info">
+              <div class="flight-main">
+                <span class="flight-route">TPE → LAX</span>
+                <span class="flight-num">－</span>
+              </div>
+              <div class="flight-times">
+                <span class="flight-date">－</span>
+                <span class="flight-sep">・</span>
+                <span class="flight-time">－ → －</span>
+                <span class="flight-duration">（－h）</span>
+              </div>
+            </div>
+          </div>
+          <div class="flight-divider"></div>
+          <div class="flight-row return">
+            <div class="flight-direction">回程</div>
+            <div class="flight-info">
+              <div class="flight-main">
+                <span class="flight-route">LAX → TPE</span>
+                <span class="flight-num">－</span>
+              </div>
+              <div class="flight-times">
+                <span class="flight-date">－</span>
+                <span class="flight-sep">・</span>
+                <span class="flight-time">－ → －</span>
+                <span class="flight-duration">（－h）</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="overall-progress-wrap">
+          <div class="progress-label">
+            <span>整體進度</span>
+            <span id="overall-progress-text">0 / 0</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="overall-progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="checklist-section">
+          <div class="section-header">
+            <div class="section-header-inner">
+              <div class="section-icon yellow"><i data-lucide="star"></i></div>
+              <span>小芋</span>
+            </div>
+            <span id="yiyu-progress-text" class="progress-count"></span>
+          </div>
+          <div class="progress-bar small">
+            <div class="progress-fill yellow" id="yiyu-progress-fill"></div>
+          </div>
+          <ul class="checklist" id="checklist-yiyu"></ul>
+        </div>
+
+        <div class="checklist-section">
+          <div class="section-header">
+            <div class="section-header-inner">
+              <div class="section-icon blue"><i data-lucide="users"></i></div>
+              <span>媽媽 &amp; 珊珊</span>
+            </div>
+            <span id="family-progress-text" class="progress-count"></span>
+          </div>
+          <div class="progress-bar small">
+            <div class="progress-fill blue" id="family-progress-fill"></div>
+          </div>
+          <ul class="checklist" id="checklist-family"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 行程 -->
+    <section id="page-itinerary" class="page">
+      <div class="page-header">
+        <div class="header-icon blue"><i data-lucide="calendar-days"></i></div>
+        <h1>行程</h1>
+      </div>
+      <div class="day-selector-wrap">
+        <div class="day-selector" id="day-selector"></div>
+      </div>
+      <div class="page-content">
+        <div id="itinerary-list" class="card-list"></div>
+      </div>
+      <button class="fab" id="btn-add-itinerary">
+        <i data-lucide="plus"></i>
+      </button>
+    </section>
+
+    <!-- 餐廳 -->
+    <section id="page-restaurant" class="page">
+      <div class="page-header">
+        <div class="header-icon yellow"><i data-lucide="utensils"></i></div>
+        <h1>餐廳</h1>
+      </div>
+      <div class="page-content">
+        <div id="restaurant-list" class="card-list"></div>
+      </div>
+      <button class="fab" id="btn-add-restaurant">
+        <i data-lucide="plus"></i>
+      </button>
+    </section>
+
+    <!-- 地圖 -->
+    <section id="page-map" class="page">
+      <div id="map"></div>
+    </section>
+
+    <!-- 記帳 -->
+    <section id="page-expense" class="page">
+      <div class="page-header">
+        <div class="header-icon blue"><i data-lucide="wallet"></i></div>
+        <h1>記帳</h1>
+      </div>
+      <div class="page-content">
+        <div class="budget-section">
+          <div class="progress-label">
+            <span>預算使用</span>
+            <span id="budget-text">NT$0 / NT$300,000</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill yellow" id="budget-fill"></div>
+          </div>
+        </div>
+
+        <div class="payer-summary" id="payer-summary"></div>
+
+        <div id="expense-list" class="card-list"></div>
+      </div>
+      <button class="fab" id="btn-add-expense">
+        <i data-lucide="plus"></i>
+      </button>
+    </section>
+
+  </div>
+
+  <!-- 底部導覽列 -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="checklist">
+      <i data-lucide="check-square"></i>
+      <span>行前準備</span>
+    </button>
+    <button class="nav-btn" data-page="itinerary">
+      <i data-lucide="calendar-days"></i>
+      <span>行程</span>
+    </button>
+    <button class="nav-btn" data-page="restaurant">
+      <i data-lucide="utensils"></i>
+      <span>餐廳</span>
+    </button>
+    <button class="nav-btn" data-page="map">
+      <i data-lucide="map"></i>
+      <span>地圖</span>
+    </button>
+    <button class="nav-btn" data-page="expense">
+      <i data-lucide="wallet"></i>
+      <span>記帳</span>
+    </button>
+  </nav>
+
+  <!-- 通用 Modal -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button class="modal-close" id="modal-close">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- 加入行程 Modal -->
+  <div id="add-to-day-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>加入行程</h2>
+        <button class="modal-close" id="add-to-day-close">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle" id="add-to-day-name"></p>
+        <div class="day-picker" id="day-picker"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=2" type="module"></script>
+</body>
+</html>
