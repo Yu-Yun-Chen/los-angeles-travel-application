@@ -16,6 +16,10 @@ function getDayDate(day) {
 function formatDate(d) {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
+const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+function formatWeekday(d) {
+  return `週${WEEKDAYS[d.getDay()]}`;
+}
 function dateStr(d) {
   return d.toISOString().slice(0, 10);
 }
@@ -201,7 +205,7 @@ function buildDaySelector() {
     const dt = getDayDate(d);
     const btn = document.createElement("button");
     btn.className = "day-chip" + (d === currentDay ? " active" : "");
-    btn.innerHTML = `<span class="day-num">${d}</span><span>${formatDate(dt)}</span>`;
+    btn.innerHTML = `<span class="day-num">${d}</span><span>${formatDate(dt)}</span><span class="day-weekday">${formatWeekday(dt)}</span>`;
     btn.addEventListener("click", () => {
       currentDay = d;
       document.querySelectorAll(".day-chip").forEach(c => c.classList.remove("active"));

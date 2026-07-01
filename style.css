@@ -386,6 +386,7 @@ html, body {
   transition: background 0.2s, color 0.2s;
 }
 .day-chip .day-num { font-size: 15px; font-weight: 700; color: inherit; }
+.day-chip .day-weekday { font-size: 10px; color: inherit; opacity: 0.7; }
 .day-chip.active { background: var(--blue); color: var(--blue-dark); }
 .day-chip.active .day-num { color: var(--blue-dark); }
 
