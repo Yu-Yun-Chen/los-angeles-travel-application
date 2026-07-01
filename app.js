@@ -211,21 +211,27 @@ function renderItinerary() {
   }
 
   list.innerHTML = dayItems.map(item => `
-    <div class="card" data-id="${item.id}">
-      <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
-      <div class="card-title">${item.name}</div>
-      <div class="card-meta">
-        ${item.hasReservation ? `<span class="tag green">預約 ${item.reservationTime || ''}</span>` : ''}
+    <div class="swipe-row" data-id="${item.id}">
+      <div class="swipe-actions">
+        <button class="swipe-btn swipe-move btn-move-day" data-id="${item.id}"><i data-lucide="calendar-arrow-up"></i>移天</button>
+        <button class="swipe-btn swipe-delete btn-del-itinerary" data-id="${item.id}"><i data-lucide="trash-2"></i>刪除</button>
       </div>
-      ${item.notes ? `<div class="card-note">${item.notes}</div>` : ''}
-      <div class="card-actions">
-        ${item.mapsUrl ? `<a class="maps-btn" href="${item.mapsUrl}" target="_blank"><i data-lucide="map-pin"></i>Google Maps</a>` : ''}
-        <button class="btn btn-ghost btn-edit-itinerary" data-id="${item.id}"><i data-lucide="pencil"></i>編輯</button>
-        <button class="btn btn-danger btn-del-itinerary" data-id="${item.id}"><i data-lucide="trash-2"></i>刪除</button>
+      <div class="card" data-id="${item.id}">
+        <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+        <div class="card-title">${item.name}</div>
+        <div class="card-meta">
+          ${item.hasReservation ? `<span class="tag green">預約 ${item.reservationTime || ''}</span>` : ''}
+        </div>
+        ${item.notes ? `<div class="card-note">${item.notes}</div>` : ''}
+        <div class="card-actions">
+          ${item.mapsUrl ? `<a class="maps-btn" href="${item.mapsUrl}" target="_blank"><i data-lucide="map-pin"></i>Google Maps</a>` : ''}
+          <button class="btn btn-ghost btn-edit-itinerary" data-id="${item.id}"><i data-lucide="pencil"></i>編輯</button>
+        </div>
       </div>
     </div>
   `).join("");
   lucide.createIcons();
+  setupSwipeRows(list);
 
   list.querySelectorAll(".btn-edit-itinerary").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -236,6 +242,9 @@ function renderItinerary() {
   list.querySelectorAll(".btn-del-itinerary").forEach(btn => {
     btn.addEventListener("click", () => deleteItinerary(btn.dataset.id));
   });
+  list.querySelectorAll(".btn-move-day").forEach(btn => {
+    btn.addEventListener("click", () => openMoveToDayPicker(btn.dataset.id));
+  });
 
   if (itinerarySortable) itinerarySortable.destroy();
   itinerarySortable = Sortable.create(list, {
@@ -244,6 +253,80 @@ function renderItinerary() {
     ghostClass: "sortable-ghost",
     onEnd: saveItineraryOrder
   });
+}
+
+function setupSwipeRows(container) {
+  container.querySelectorAll(".swipe-row").forEach(row => {
+    const card = row.querySelector(".card");
+    const actions = row.querySelector(".swipe-actions");
+    let startX = 0, currentX = 0, swiping = false;
+    const THRESHOLD = 80;
+
+    card.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+      swiping = true;
+    }, { passive: true });
+
+    card.addEventListener("touchmove", e => {
+      if (!swiping) return;
+      currentX = e.touches[0].clientX - startX;
+      if (currentX < 0) {
+        card.style.transform = `translateX(${Math.max(currentX, -160)}px)`;
+        card.style.transition = "none";
+      }
+    }, { passive: true });
+
+    card.addEventListener("touchend", () => {
+      swiping = false;
+      card.style.transition = "transform 0.25s ease";
+      if (currentX < -THRESHOLD) {
+        card.style.transform = "translateX(-160px)";
+        row.classList.add("open");
+      } else {
+        card.style.transform = "translateX(0)";
+        row.classList.remove("open");
+      }
+      currentX = 0;
+    });
+  });
+
+  // 點卡片以外的地方收回
+  document.addEventListener("touchstart", e => {
+    if (!e.target.closest(".swipe-row")) {
+      container.querySelectorAll(".swipe-row.open").forEach(row => {
+        row.querySelector(".card").style.transform = "translateX(0)";
+        row.classList.remove("open");
+      });
+    }
+  }, { passive: true });
+}
+
+function openMoveToDayPicker(itemId) {
+  const item = itineraryData.find(i => i.id === itemId);
+  if (!item) return;
+  document.getElementById("add-to-day-name").textContent = `「${item.name}」移到哪一天？`;
+  const picker = document.getElementById("day-picker");
+  picker.innerHTML = "";
+  for (let d = 1; d <= TOTAL_DAYS; d++) {
+    if (d === item.day) continue;
+    const dt = getDayDate(d);
+    const btn = document.createElement("button");
+    btn.className = "day-pick-btn";
+    btn.innerHTML = `Day ${d}<br><small>${formatDate(dt)}</small>`;
+    btn.addEventListener("click", async () => {
+      document.getElementById("add-to-day-overlay").classList.add("hidden");
+      const { doc, updateDoc } = window.__fs;
+      try {
+        await updateDoc(doc(window.__db, "itinerary", itemId), {
+          day: d,
+          date: dateStr(getDayDate(d)),
+          order: itineraryData.filter(i => i.day === d).length
+        });
+      } catch(e) { alert("移動失敗：" + e.message); }
+    });
+    picker.appendChild(btn);
+  }
+  document.getElementById("add-to-day-overlay").classList.remove("hidden");
 }
 
 async function saveItineraryOrder(evt) {
@@ -320,12 +403,16 @@ async function openItineraryForm(item = null) {
 
     const { doc, setDoc, addDoc, collection, updateDoc } = window.__fs;
     const db = window.__db;
-    if (item) {
-      await updateDoc(doc(db, "itinerary", item.id), data);
-    } else {
-      await addDoc(collection(db, "itinerary"), data);
+    try {
+      if (item) {
+        await updateDoc(doc(db, "itinerary", item.id), data);
+      } else {
+        await addDoc(collection(db, "itinerary"), data);
+      }
+      closeModal();
+    } catch (e) {
+      alert("儲存失敗：" + e.message);
     }
-    closeModal();
   });
 }
 
