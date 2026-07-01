@@ -174,8 +174,7 @@ function initItinerary() {
   const { collection, onSnapshot, orderBy, query } = window.__fs;
   const db = window.__db;
 
-  const q = query(collection(db, "itinerary"), orderBy("day"), orderBy("order"));
-  onSnapshot(q, snapshot => {
+  onSnapshot(collection(db, "itinerary"), snapshot => {
     itineraryData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     renderItinerary();
   });
@@ -585,9 +584,9 @@ function initExpense() {
   const { collection, onSnapshot, orderBy, query } = window.__fs;
   const db = window.__db;
 
-  const q = query(collection(db, "expenses"), orderBy("date", "desc"), orderBy("createdAt", "desc"));
-  onSnapshot(q, snapshot => {
+  onSnapshot(collection(db, "expenses"), snapshot => {
     expenseData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    expenseData.sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.createdAt > a.createdAt ? 1 : -1));
     renderExpenses();
   });
 }
