@@ -30,6 +30,19 @@ function parseLatLng(url) {
   return null;
 }
 
+// ── Geocode place name via Nominatim ──
+async function geocodeByName(name) {
+  try {
+    const q = encodeURIComponent(name + ", Los Angeles, CA");
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+      headers: { "Accept-Language": "en" }
+    });
+    const data = await res.json();
+    if (data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  } catch(e) {}
+  return null;
+}
+
 // ── Wait for Firebase to be ready ──
 function waitForDB() {
   return new Promise(resolve => {
@@ -402,6 +415,12 @@ async function openItineraryForm(item = null) {
       order: item?.order ?? itineraryData.filter(i => i.day === currentDay).length
     };
 
+    // 沒有座標時用名稱自動查詢
+    if (!data.lat) {
+      const geo = await geocodeByName(name);
+      if (geo) { data.lat = geo.lat; data.lng = geo.lng; }
+    }
+
     const { doc, setDoc, addDoc, collection, updateDoc } = window.__fs;
     const db = window.__db;
     try {
@@ -536,14 +555,23 @@ async function openRestaurantForm(r = null) {
       notes: formVal("r-notes") || null,
     };
 
+    if (!data.lat) {
+      const geo = await geocodeByName(name);
+      if (geo) { data.lat = geo.lat; data.lng = geo.lng; }
+    }
+
     const { doc, addDoc, updateDoc, collection } = window.__fs;
     const db = window.__db;
-    if (r) {
-      await updateDoc(doc(db, "restaurants", r.id), data);
-    } else {
-      await addDoc(collection(db, "restaurants"), data);
+    try {
+      if (r) {
+        await updateDoc(doc(db, "restaurants", r.id), data);
+      } else {
+        await addDoc(collection(db, "restaurants"), data);
+      }
+      closeModal();
+    } catch(e) {
+      alert("儲存失敗：" + e.message);
     }
-    closeModal();
   });
 }
 
