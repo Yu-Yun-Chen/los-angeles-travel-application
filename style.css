@@ -152,6 +152,7 @@ html, body {
   font-size: 12px;
   color: var(--text-sub);
   line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .card-actions {
@@ -440,6 +441,9 @@ html, body {
 .payer-card:nth-child(3) { border-top-color: #f4a4c0; }
 .payer-card .payer-name { font-size: 11px; color: var(--text-sub); margin-bottom: 4px; }
 .payer-card .payer-amount { font-size: 13px; font-weight: 700; }
+.payer-card.active { background: var(--blue); border-top-color: var(--blue-dark); }
+.payer-card.active .payer-name { color: #1a4d7a; }
+.payer-card.active .payer-amount { color: #1a4d7a; }
 
 /* ── Expense Card ── */
 .expense-card {
@@ -450,6 +454,11 @@ html, body {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+.expense-card.card-swipeable {
+  transition: transform 0.25s ease;
+  position: relative;
+  z-index: 1;
 }
 .expense-info { flex: 1; }
 .expense-desc { font-size: 14px; font-weight: 600; }

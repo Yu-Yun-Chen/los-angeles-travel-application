@@ -256,9 +256,9 @@ function renderItinerary() {
   });
 }
 
-function setupSwipeRows(container) {
+function setupSwipeRows(container, cardSelector = ".card") {
   container.querySelectorAll(".swipe-row").forEach(row => {
-    const card = row.querySelector(".card");
+    const card = row.querySelector(cardSelector);
     const actions = row.querySelector(".swipe-actions");
     let startX = 0, currentX = 0, swiping = false;
     const THRESHOLD = 80;
@@ -679,6 +679,7 @@ function refreshMap() {
 // 記帳
 // ════════════════════════════════════════
 let expenseData = [];
+let activePayerFilter = null;
 
 function initExpense() {
   document.getElementById("btn-add-expense").addEventListener("click", () => openExpenseForm());
@@ -710,74 +711,96 @@ function renderExpenses() {
   PAYERS.forEach(p => byPayer[p] = 0);
   expenseData.forEach(e => { byPayer[e.paidBy] = (byPayer[e.paidBy] || 0) + toTWD(e.amount, e.currency); });
 
-  document.getElementById("payer-summary").innerHTML = PAYERS.map(p => `
-    <div class="payer-card">
+  const payerSummary = document.getElementById("payer-summary");
+  payerSummary.innerHTML = PAYERS.map(p => `
+    <div class="payer-card ${activePayerFilter === p ? 'active' : ''}" data-payer="${p}">
       <div class="payer-name">${p}</div>
       <div class="payer-amount">NT$${(byPayer[p] || 0).toLocaleString()}</div>
     </div>
   `).join("");
+  payerSummary.querySelectorAll(".payer-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const p = card.dataset.payer;
+      activePayerFilter = activePayerFilter === p ? null : p;
+      renderExpenses();
+    });
+  });
 
-  // 花費列表
+  // 花費列表（套用 filter）
+  const filtered = activePayerFilter
+    ? expenseData.filter(e => e.paidBy === activePayerFilter)
+    : expenseData;
+
   const list = document.getElementById("expense-list");
-  if (expenseData.length === 0) {
-    list.innerHTML = `<div class="empty-state"><i data-lucide="receipt"></i><p>還沒有花費紀錄</p></div>`;
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><i data-lucide="receipt"></i><p>${activePayerFilter ? `${activePayerFilter} 還沒有花費` : '還沒有花費紀錄'}</p></div>`;
     lucide.createIcons();
     return;
   }
 
-  list.innerHTML = expenseData.map(e => {
+  list.innerHTML = filtered.map(e => {
     const twd = toTWD(e.amount, e.currency);
     const orig = e.currency === "USD" ? `US$${e.amount.toLocaleString()}` : "";
     return `
-      <div class="expense-card" data-id="${e.id}">
-        <div class="expense-info">
-          <div class="expense-desc">${e.description}</div>
-          <div class="expense-meta">${e.date} · ${e.paidBy}</div>
+      <div class="swipe-row" data-id="${e.id}">
+        <div class="swipe-actions">
+          <button class="swipe-btn swipe-edit btn-edit-expense" data-id="${e.id}"><i data-lucide="pencil"></i>編輯</button>
+          <button class="swipe-btn swipe-delete btn-del-expense" data-id="${e.id}"><i data-lucide="trash-2"></i>刪除</button>
         </div>
-        <div class="expense-amount">
-          <div class="expense-twd">NT$${twd.toLocaleString()}</div>
-          ${orig ? `<div class="expense-orig">${orig}</div>` : ''}
+        <div class="expense-card card-swipeable" data-id="${e.id}">
+          <div class="expense-info">
+            <div class="expense-desc">${e.description}</div>
+            <div class="expense-meta">${e.date} · ${e.paidBy}</div>
+          </div>
+          <div class="expense-amount">
+            <div class="expense-twd">NT$${twd.toLocaleString()}</div>
+            ${orig ? `<div class="expense-orig">${orig}</div>` : ''}
+          </div>
         </div>
-        <button class="btn btn-danger btn-del-expense" data-id="${e.id}" style="padding:5px 8px;margin-left:4px;">
-          <i data-lucide="trash-2"></i>
-        </button>
       </div>
     `;
   }).join("");
   lucide.createIcons();
+  setupSwipeRows(list, ".expense-card.card-swipeable");
 
   list.querySelectorAll(".btn-del-expense").forEach(btn => {
     btn.addEventListener("click", () => deleteExpense(btn.dataset.id));
   });
+  list.querySelectorAll(".btn-edit-expense").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const e = expenseData.find(x => x.id === btn.dataset.id);
+      if (e) openExpenseForm(e);
+    });
+  });
 }
 
-function expenseFormHTML() {
+function expenseFormHTML(e = {}) {
   const today = dateStr(new Date());
   return `
     <div class="form-group">
       <label>項目名稱 *</label>
-      <input id="e-desc" placeholder="例：環球影城門票" />
+      <input id="e-desc" value="${e.description || ''}" placeholder="例：環球影城門票" />
     </div>
     <div class="form-group">
       <label>幣別</label>
       <select id="e-currency">
-        <option value="TWD">台幣 TWD</option>
-        <option value="USD">美金 USD</option>
+        <option value="TWD" ${e.currency === 'TWD' || !e.currency ? 'selected' : ''}>台幣 TWD</option>
+        <option value="USD" ${e.currency === 'USD' ? 'selected' : ''}>美金 USD</option>
       </select>
     </div>
     <div class="form-group">
       <label>金額 *</label>
-      <input id="e-amount" type="number" min="0" step="0.01" placeholder="0" />
+      <input id="e-amount" type="number" min="0" step="0.01" value="${e.amount || ''}" placeholder="0" />
     </div>
     <div class="form-group">
       <label>付款人 *</label>
       <select id="e-payer">
-        ${PAYERS.map(p => `<option value="${p}">${p}</option>`).join("")}
+        ${PAYERS.map(p => `<option value="${p}" ${e.paidBy === p ? 'selected' : ''}>${p}</option>`).join("")}
       </select>
     </div>
     <div class="form-group">
       <label>日期</label>
-      <input id="e-date" type="date" value="${today}" />
+      <input id="e-date" type="date" value="${e.date || today}" />
     </div>
     <div class="form-actions">
       <button class="btn btn-ghost" id="e-cancel">取消</button>
@@ -786,8 +809,8 @@ function expenseFormHTML() {
   `;
 }
 
-async function openExpenseForm() {
-  openModal("新增花費", expenseFormHTML());
+async function openExpenseForm(expense = null) {
+  openModal(expense ? "編輯花費" : "新增花費", expenseFormHTML(expense || {}));
   document.getElementById("e-cancel").addEventListener("click", () => closeModal());
   document.getElementById("e-save").addEventListener("click", async () => {
     const desc = formVal("e-desc");
@@ -796,18 +819,27 @@ async function openExpenseForm() {
     const amount = parseFloat(amountStr);
     if (isNaN(amount) || amount <= 0) { alert("請輸入有效金額"); return; }
 
-    const { addDoc, collection, serverTimestamp } = window.__fs;
-    const db = window.__db;
-
-    await addDoc(collection(db, "expenses"), {
+    const data = {
       description: desc,
       currency: formVal("e-currency"),
       amount,
       paidBy: formVal("e-payer"),
       date: formVal("e-date") || dateStr(new Date()),
-      createdAt: new Date().toISOString(),
-    });
-    closeModal();
+      createdAt: expense?.createdAt ?? new Date().toISOString(),
+    };
+
+    const { addDoc, updateDoc, doc, collection } = window.__fs;
+    const db = window.__db;
+    try {
+      if (expense) {
+        await updateDoc(doc(db, "expenses", expense.id), data);
+      } else {
+        await addDoc(collection(db, "expenses"), data);
+      }
+      closeModal();
+    } catch(err) {
+      alert("儲存失敗：" + err.message);
+    }
   });
 }
 
