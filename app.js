@@ -1,7 +1,7 @@
 // ── Constants ──
 const USD_TO_TWD = 31.5;
 const BUDGET_TWD = 300000;
-const TRIP_START = new Date("2026-08-25");
+const TRIP_START = new Date(2026, 7, 25); // 月份從0開始，7=8月
 const TOTAL_DAYS = 12;
 
 const PAYERS = ["小芋", "媽媽", "珊珊"];
