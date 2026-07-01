@@ -177,6 +177,7 @@ function initItinerary() {
   onSnapshot(collection(db, "itinerary"), snapshot => {
     itineraryData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     renderItinerary();
+    if (mapInitialized) refreshMap();
   });
 }
 
@@ -347,7 +348,7 @@ function itineraryFormHTML(item = {}) {
       <input id="f-name" value="${item.name || ''}" placeholder="例：Universal Studios" />
     </div>
     <div class="form-group">
-      <label>Google Maps URL</label>
+      <label>Google Maps URL <span style="font-size:11px;color:#aaa;">（貼完整網址，非縮短連結）</span></label>
       <input id="f-maps" value="${item.mapsUrl || ''}" placeholder="貼上 Google Maps 連結" />
     </div>
     <div class="form-toggle">
@@ -448,22 +449,27 @@ function renderRestaurants() {
   }
 
   list.innerHTML = restaurantData.map(r => `
-    <div class="card" data-id="${r.id}">
-      <div class="card-title">${r.name}</div>
-      <div class="card-meta">
-        ${r.cuisine ? `<span class="tag">${r.cuisine}</span>` : ''}
-        ${r.priceRange ? `<span class="tag blue">${r.priceRange}</span>` : ''}
+    <div class="swipe-row" data-id="${r.id}">
+      <div class="swipe-actions">
+        <button class="swipe-btn swipe-edit btn-edit-rest" data-id="${r.id}"><i data-lucide="pencil"></i>編輯</button>
+        <button class="swipe-btn swipe-delete btn-del-rest" data-id="${r.id}"><i data-lucide="trash-2"></i>刪除</button>
       </div>
-      ${r.notes ? `<div class="card-note">${r.notes}</div>` : ''}
-      <div class="card-actions">
-        ${r.mapsUrl ? `<a class="maps-btn" href="${r.mapsUrl}" target="_blank"><i data-lucide="map-pin"></i>Google Maps</a>` : ''}
-        <button class="btn btn-yellow btn-add-to-day" data-id="${r.id}"><i data-lucide="calendar-plus"></i>加入行程</button>
-        <button class="btn btn-ghost btn-edit-rest" data-id="${r.id}"><i data-lucide="pencil"></i>編輯</button>
-        <button class="btn btn-danger btn-del-rest" data-id="${r.id}"><i data-lucide="trash-2"></i>刪除</button>
+      <div class="card" data-id="${r.id}">
+        <div class="card-title">${r.name}</div>
+        <div class="card-meta">
+          ${r.cuisine ? `<span class="tag">${r.cuisine}</span>` : ''}
+          ${r.priceRange ? `<span class="tag blue">${r.priceRange}</span>` : ''}
+        </div>
+        ${r.notes ? `<div class="card-note">${r.notes}</div>` : ''}
+        <div class="card-actions">
+          ${r.mapsUrl ? `<a class="maps-btn" href="${r.mapsUrl}" target="_blank"><i data-lucide="map-pin"></i>Google Maps</a>` : ''}
+          <button class="btn btn-yellow btn-add-to-day" data-id="${r.id}"><i data-lucide="calendar-plus"></i>加入行程</button>
+        </div>
       </div>
     </div>
   `).join("");
   lucide.createIcons();
+  setupSwipeRows(list);
 
   list.querySelectorAll(".btn-add-to-day").forEach(btn => {
     btn.addEventListener("click", () => openAddToDay(btn.dataset.id));
@@ -655,6 +661,15 @@ function refreshMap() {
 
   if (bounds.length > 0) {
     leafletMap.fitBounds(bounds, { padding: [30, 30] });
+    document.getElementById("map-hint")?.remove();
+  } else {
+    if (!document.getElementById("map-hint")) {
+      const hint = document.createElement("div");
+      hint.id = "map-hint";
+      hint.className = "map-hint";
+      hint.textContent = "在行程中填入完整 Google Maps 連結，地點就會出現在這裡";
+      document.getElementById("page-map").appendChild(hint);
+    }
   }
 
   setTimeout(() => leafletMap.invalidateSize(), 100);
