@@ -7,6 +7,7 @@
   --blue: #C2DCE8;
   --blue-dark: #4A8BAA;
   --sand: #FFF8ED;
+  --sand-section: #F4ECD8;
   --sand-dark: #C8A882;
   --white: #FFFFFF;
   --bg: #FDF6F0;
@@ -61,6 +62,7 @@ html, body {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.02em;
+  color: var(--text-sub);
 }
 .page-header .header-icon {
   width: 24px; height: 24px;
@@ -370,7 +372,7 @@ a.flight-row:active { background: rgba(0,0,0,0.03); }
   overflow: hidden;
 }
 .checklist-section .section-header {
-  background: var(--sand);
+  background: var(--sand-section);
   padding: 10px 16px 10px;
   margin-bottom: 0;
   border-bottom: 1px solid var(--border);
