@@ -52,7 +52,7 @@ html, body {
   display: flex;
   align-items: center;
   padding: 0 20px;
-  background: var(--white);
+  background: var(--sand);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   gap: 10px;
@@ -90,7 +90,7 @@ html, body {
   left: 0; right: 0;
   height: calc(var(--nav-height) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
-  background: var(--white);
+  background: var(--sand);
   border-top: 1px solid var(--border);
   display: flex;
   align-items: flex-start;
@@ -288,7 +288,7 @@ a.flight-card:active { opacity: 0.85; }
 }
 .flight-row.return .flight-direction {
   background: var(--yellow-dark);
-  color: #5A2E08;
+  color: #fff;
 }
 
 .flight-info { flex: 1; }
