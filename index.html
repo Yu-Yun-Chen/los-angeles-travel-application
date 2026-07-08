@@ -45,7 +45,7 @@
     });
   </script>
 
-  <link rel="stylesheet" href="style.css?v=8" />
+  <link rel="stylesheet" href="style.css?v=9" />
 </head>
 <body>
   <!-- 頁面容器 -->
@@ -59,7 +59,11 @@
       </div>
       <div class="page-content">
         <!-- 航班資訊 -->
-        <div class="flight-card">
+        <a class="flight-card" href="https://www.china-airlines.com/en-global/flight-info/flight-status" target="_blank" rel="noopener">
+          <div class="flight-card-header">
+            <span class="flight-airline">中華航空 China Airlines</span>
+            <i data-lucide="external-link" class="flight-external-icon"></i>
+          </div>
           <div class="flight-row outbound">
             <div class="flight-direction">去程</div>
             <div class="flight-info">
@@ -72,6 +76,11 @@
                 <span class="flight-sep">・</span>
                 <span class="flight-time">23:50 → 21:35</span>
                 <span class="flight-duration">（12h 45min）</span>
+              </div>
+              <div class="flight-terminals">
+                <span class="terminal-tag">TPE T2</span>
+                <i data-lucide="arrow-right" style="width:11px;height:11px;flex-shrink:0;"></i>
+                <span class="terminal-tag">LAX T-B</span>
               </div>
             </div>
           </div>
@@ -89,9 +98,14 @@
                 <span class="flight-time">00:55 → 05:10 <span style="font-size:10px;">+1日</span></span>
                 <span class="flight-duration">（13h 15min）</span>
               </div>
+              <div class="flight-terminals">
+                <span class="terminal-tag">LAX T-B</span>
+                <i data-lucide="arrow-right" style="width:11px;height:11px;flex-shrink:0;"></i>
+                <span class="terminal-tag">TPE T2</span>
+              </div>
             </div>
           </div>
-        </div>
+        </a>
 
         <div class="overall-progress-wrap">
           <div class="progress-label">
@@ -250,6 +264,16 @@
     </div>
   </div>
 
-  <script src="app.js?v=8" type="module"></script>
+  <!-- 拖曳換天的邊緣區域 -->
+  <div id="drag-zone-prev" class="drag-zone drag-zone-left hidden">
+    <i data-lucide="chevron-left"></i>
+    <span class="dz-label">前一天</span>
+  </div>
+  <div id="drag-zone-next" class="drag-zone drag-zone-right hidden">
+    <i data-lucide="chevron-right"></i>
+    <span class="dz-label">下一天</span>
+  </div>
+
+  <script src="app.js?v=9" type="module"></script>
 </body>
 </html>

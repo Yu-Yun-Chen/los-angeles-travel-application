@@ -34,13 +34,14 @@ function parseLatLng(url) {
   return null;
 }
 
-// ── Geocode place name via Nominatim ──
+// ── Geocode place name via Nominatim (SoCal viewbox covers LA + SD) ──
 async function geocodeByName(name) {
   try {
-    const q = encodeURIComponent(name + ", Los Angeles, CA");
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
-      headers: { "Accept-Language": "en" }
-    });
+    const q = encodeURIComponent(name);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${q}&viewbox=-120.5,31.0,-115.5,35.5&bounded=0&format=json&limit=1`,
+      { headers: { "Accept-Language": "en" } }
+    );
     const data = await res.json();
     if (data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
   } catch(e) {}
@@ -184,8 +185,36 @@ let currentDay = 1;
 let itineraryData = [];
 let itinerarySortable = null;
 
+function changeDay(d) {
+  if (d < 1 || d > TOTAL_DAYS) return;
+  currentDay = d;
+  document.querySelectorAll(".day-chip").forEach((c, i) => c.classList.toggle("active", i + 1 === d));
+  const chip = document.querySelector(`#day-selector .day-chip:nth-child(${d})`);
+  chip?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  renderItinerary();
+}
+
+function setupItineraryPageSwipe() {
+  const page = document.getElementById("page-itinerary");
+  let startX = 0, startY = 0, startEl = null;
+  page.addEventListener("touchstart", e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    startEl = e.target;
+  }, { passive: true });
+  page.addEventListener("touchend", e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    if (startEl.closest(".swipe-row") || startEl.closest("#day-selector") || startEl.closest(".drag-handle")) return;
+    if (dx < 0) changeDay(currentDay + 1);
+    else changeDay(currentDay - 1);
+  }, { passive: true });
+}
+
 function initItinerary() {
   buildDaySelector();
+  setupItineraryPageSwipe();
   document.getElementById("btn-add-itinerary").addEventListener("click", () => openItineraryForm());
 
   const { collection, onSnapshot, orderBy, query } = window.__fs;
@@ -269,8 +298,78 @@ function renderItinerary() {
     animation: 150,
     handle: ".drag-handle",
     ghostClass: "sortable-ghost",
-    onEnd: saveItineraryOrder
+    onStart: function(evt) {
+      dragItemId = evt.item.querySelector(".card")?.dataset.id;
+      dragTouchX = null;
+      showDragZones();
+      document.addEventListener("touchmove", trackDragTouch, { passive: true });
+    },
+    onEnd: async function(evt) {
+      document.removeEventListener("touchmove", trackDragTouch);
+      hideDragZones();
+      const touch = evt.originalEvent?.changedTouches?.[0];
+      const finalX = touch?.clientX ?? dragTouchX;
+      const w = window.innerWidth;
+      if (dragItemId && finalX != null) {
+        if (finalX < 72 && currentDay > 1) {
+          await moveToDayAdjacent(dragItemId, currentDay - 1);
+          dragItemId = null; return;
+        } else if (finalX > w - 72 && currentDay < TOTAL_DAYS) {
+          await moveToDayAdjacent(dragItemId, currentDay + 1);
+          dragItemId = null; return;
+        }
+      }
+      dragItemId = null;
+      saveItineraryOrder(evt);
+    }
   });
+}
+
+let dragItemId = null;
+let dragTouchX = null;
+
+function trackDragTouch(e) {
+  if (!dragItemId) return;
+  dragTouchX = e.touches[0].clientX;
+  const w = window.innerWidth;
+  const prev = document.getElementById("drag-zone-prev");
+  const next = document.getElementById("drag-zone-next");
+  if (dragTouchX < 72) {
+    prev?.classList.add("highlight"); next?.classList.remove("highlight");
+  } else if (dragTouchX > w - 72) {
+    next?.classList.add("highlight"); prev?.classList.remove("highlight");
+  } else {
+    prev?.classList.remove("highlight"); next?.classList.remove("highlight");
+  }
+}
+
+function showDragZones() {
+  const prev = document.getElementById("drag-zone-prev");
+  const next = document.getElementById("drag-zone-next");
+  if (prev) { prev.querySelector(".dz-label").textContent = `Day ${currentDay - 1}`; }
+  if (next) { next.querySelector(".dz-label").textContent = `Day ${currentDay + 1}`; }
+  if (currentDay > 1) prev?.classList.remove("hidden");
+  if (currentDay < TOTAL_DAYS) next?.classList.remove("hidden");
+}
+
+function hideDragZones() {
+  document.getElementById("drag-zone-prev")?.classList.add("hidden");
+  document.getElementById("drag-zone-next")?.classList.add("hidden");
+  document.getElementById("drag-zone-prev")?.classList.remove("highlight");
+  document.getElementById("drag-zone-next")?.classList.remove("highlight");
+  dragTouchX = null;
+}
+
+async function moveToDayAdjacent(itemId, targetDay) {
+  const { doc, updateDoc } = window.__fs;
+  try {
+    await updateDoc(doc(window.__db, "itinerary", itemId), {
+      day: targetDay,
+      date: dateStr(getDayDate(targetDay)),
+      order: itineraryData.filter(i => i.day === targetDay).length
+    });
+    changeDay(targetDay);
+  } catch(e) { alert("移動失敗：" + e.message); }
 }
 
 function setupSwipeRows(container, cardSelector = ".card") {
@@ -643,7 +742,7 @@ function initMap() {}
 
 function refreshMap() {
   if (!mapInitialized) {
-    leafletMap = L.map("map", { zoomControl: true }).setView([34.05, -118.25], 10);
+    leafletMap = L.map("map", { zoomControl: true }).setView([33.4, -117.7], 8);
     L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
