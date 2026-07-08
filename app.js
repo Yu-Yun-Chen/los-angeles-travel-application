@@ -114,6 +114,12 @@ function openModal(title, bodyHTML) {
 function closeModal(result = null) {
   document.getElementById("modal-overlay").classList.add("hidden");
   if (modalResolve) { modalResolve(result); modalResolve = null; }
+  // 關閉 modal 後重置 iOS Safari 自動縮放
+  const vp = document.querySelector("meta[name=viewport]");
+  if (vp) {
+    vp.setAttribute("content", "width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0");
+    setTimeout(() => vp.setAttribute("content", "width=device-width, initial-scale=1.0, viewport-fit=cover"), 300);
+  }
 }
 
 // ── Form helpers ──

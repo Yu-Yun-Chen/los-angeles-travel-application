@@ -198,12 +198,12 @@ html, body {
 .drag-handle svg { width: 18px; height: 18px; }
 
 /* ── Flight Card ── */
-a.flight-card {
-  display: block;
+a.flight-row {
+  display: flex;
   text-decoration: none;
   color: inherit;
 }
-a.flight-card:active { opacity: 0.85; }
+a.flight-row:active { background: rgba(0,0,0,0.03); }
 
 .flight-card {
   background: var(--white);
@@ -226,22 +226,28 @@ a.flight-card:active { opacity: 0.85; }
 }
 .flight-external-icon { width: 13px; height: 13px; opacity: 0.5; }
 
-.flight-terminals {
+.flight-tap-hint {
+  font-size: 10px;
+  color: var(--text-sub);
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 5px;
-  color: var(--text-sub);
+  gap: 3px;
 }
-.terminal-tag {
-  font-size: 11px;
-  font-weight: 600;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  padding: 1px 7px;
-  border-radius: 4px;
-  color: var(--text);
+.flight-airports {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
 }
+.airport-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.airport-code { font-size: 17px; font-weight: 700; line-height: 1; }
+.airport-terminal { font-size: 10px; color: var(--text-sub); }
+.route-arrow-icon { width: 14px; height: 14px; color: var(--text-sub); flex-shrink: 0; }
 
 /* ── Drag Zones ── */
 .drag-zone {
@@ -640,7 +646,7 @@ a.flight-card:active { opacity: 0.85; }
   padding: 10px 12px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 16px;
   font-family: inherit;
   background: var(--white);
   color: var(--text);

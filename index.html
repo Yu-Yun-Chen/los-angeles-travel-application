@@ -45,7 +45,7 @@
     });
   </script>
 
-  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=12" />
 </head>
 <body>
   <!-- 頁面容器 -->
@@ -59,16 +59,24 @@
       </div>
       <div class="page-content">
         <!-- 航班資訊 -->
-        <a class="flight-card" href="https://www.china-airlines.com/en-global/flight-info/flight-status" target="_blank" rel="noopener">
+        <div class="flight-card">
           <div class="flight-card-header">
             <span class="flight-airline">中華航空 China Airlines</span>
-            <i data-lucide="external-link" class="flight-external-icon"></i>
+            <span class="flight-tap-hint"><i data-lucide="external-link" class="flight-external-icon"></i> 點擊查即時狀態</span>
           </div>
-          <div class="flight-row outbound">
+          <a class="flight-row outbound" href="https://www.google.com/search?q=China+Airlines+CI8+flight+status" target="_blank" rel="noopener">
             <div class="flight-direction">去程</div>
             <div class="flight-info">
-              <div class="flight-main">
-                <span class="flight-route">TPE → LAX</span>
+              <div class="flight-airports">
+                <div class="airport-block">
+                  <span class="airport-code">TPE</span>
+                  <span class="airport-terminal">Terminal 2</span>
+                </div>
+                <i data-lucide="arrow-right" class="route-arrow-icon"></i>
+                <div class="airport-block">
+                  <span class="airport-code">LAX</span>
+                  <span class="airport-terminal">Terminal B</span>
+                </div>
                 <span class="flight-num">CI 8</span>
               </div>
               <div class="flight-times">
@@ -77,19 +85,22 @@
                 <span class="flight-time">23:50 → 21:35</span>
                 <span class="flight-duration">（12h 45min）</span>
               </div>
-              <div class="flight-terminals">
-                <span class="terminal-tag">TPE T2</span>
-                <i data-lucide="arrow-right" style="width:11px;height:11px;flex-shrink:0;"></i>
-                <span class="terminal-tag">LAX T-B</span>
-              </div>
             </div>
-          </div>
+          </a>
           <div class="flight-divider"></div>
-          <div class="flight-row return">
+          <a class="flight-row return" href="https://www.google.com/search?q=China+Airlines+CI7+flight+status" target="_blank" rel="noopener">
             <div class="flight-direction">回程</div>
             <div class="flight-info">
-              <div class="flight-main">
-                <span class="flight-route">LAX → TPE</span>
+              <div class="flight-airports">
+                <div class="airport-block">
+                  <span class="airport-code">LAX</span>
+                  <span class="airport-terminal">Terminal B</span>
+                </div>
+                <i data-lucide="arrow-right" class="route-arrow-icon"></i>
+                <div class="airport-block">
+                  <span class="airport-code">TPE</span>
+                  <span class="airport-terminal">Terminal 2</span>
+                </div>
                 <span class="flight-num">CI 7</span>
               </div>
               <div class="flight-times">
@@ -98,14 +109,9 @@
                 <span class="flight-time">00:55 → 05:10 <span style="font-size:10px;">+1日</span></span>
                 <span class="flight-duration">（13h 15min）</span>
               </div>
-              <div class="flight-terminals">
-                <span class="terminal-tag">LAX T-B</span>
-                <i data-lucide="arrow-right" style="width:11px;height:11px;flex-shrink:0;"></i>
-                <span class="terminal-tag">TPE T2</span>
-              </div>
             </div>
-          </div>
-        </a>
+          </a>
+        </div>
 
         <div class="overall-progress-wrap">
           <div class="progress-label">
@@ -274,6 +280,6 @@
     <span class="dz-label">下一天</span>
   </div>
 
-  <script src="app.js?v=9" type="module"></script>
+  <script src="app.js?v=10" type="module"></script>
 </body>
 </html>
