@@ -464,10 +464,10 @@ a.flight-row:active { background: rgba(0,0,0,0.03); }
   padding: 6px 14px;
   border-radius: 20px;
   border: none;
-  background: var(--border);
+  background: #F0D8C0;
   cursor: pointer;
   font-size: 12px;
-  color: var(--text-sub);
+  color: #A06030;
   font-weight: 500;
   white-space: nowrap;
   transition: background 0.2s, color 0.2s;
