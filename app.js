@@ -83,7 +83,15 @@ function setupNav() {
       document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById(`page-${page}`).classList.add("active");
-      if (page === "map") refreshMap();
+      if (page === "map") {
+        refreshMap();
+        // 重置 iOS Safari 殘留縮放
+        const vp = document.querySelector("meta[name=viewport]");
+        if (vp) {
+          vp.setAttribute("content", "width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0");
+          setTimeout(() => vp.setAttribute("content", "width=device-width, initial-scale=1.0, viewport-fit=cover"), 300);
+        }
+      }
     });
   });
 }
@@ -748,7 +756,11 @@ const DAY_COLORS = [
   "#FFED6F","#8DD3C7"
 ];
 
-function initMap() {}
+function initMap() {
+  document.getElementById("btn-map-reset").addEventListener("click", () => {
+    if (leafletMap) leafletMap.setView([33.4, -117.7], 8);
+  });
+}
 
 function refreshMap() {
   if (!mapInitialized) {
@@ -801,7 +813,7 @@ function refreshMap() {
   }
 
   if (bounds.length > 0) {
-    leafletMap.fitBounds(bounds, { padding: [30, 30] });
+    leafletMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
     document.getElementById("map-hint")?.remove();
   } else {
     if (!document.getElementById("map-hint")) {

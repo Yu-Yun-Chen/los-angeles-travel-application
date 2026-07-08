@@ -479,6 +479,22 @@ a.flight-row:active { background: rgba(0,0,0,0.03); }
 
 /* ── Map ── */
 #page-map { position: relative; }
+.map-reset-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--blue-dark);
+}
+.map-reset-btn:active { opacity: 0.7; }
+.map-reset-btn svg { width: 20px; height: 20px; }
 #map {
   flex: 1;
   width: 100%;
