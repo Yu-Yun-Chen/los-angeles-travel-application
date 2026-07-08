@@ -274,6 +274,8 @@ function renderItinerary() {
         <div class="card-title">${item.name}</div>
         <div class="card-meta">
           ${item.hasReservation ? `<span class="tag green">預約 ${item.reservationTime || ''}</span>` : ''}
+          ${item.cuisine ? `<span class="tag">${item.cuisine}</span>` : ''}
+          ${item.priceRange ? `<span class="tag blue">${item.priceRange}</span>` : ''}
         </div>
         ${item.notes ? `<div class="card-note">${item.notes}</div>` : ''}
         <div class="card-actions">
@@ -724,6 +726,8 @@ async function addRestaurantToItinerary(r, day) {
     mapsUrl: r.mapsUrl || null,
     lat: r.lat || null,
     lng: r.lng || null,
+    cuisine: r.cuisine || null,
+    priceRange: r.priceRange || null,
     hasReservation: false,
     reservationTime: null,
     notes: r.notes || null,
