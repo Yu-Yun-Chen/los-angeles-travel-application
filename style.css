@@ -463,19 +463,19 @@ a.flight-row:active { background: rgba(0,0,0,0.03); }
   align-items: center;
   padding: 6px 14px;
   border-radius: 20px;
-  border: none;
-  background: #F0D8C0;
+  border: 2px solid transparent;
+  background: transparent;
   cursor: pointer;
   font-size: 12px;
-  color: #A06030;
+  color: #C8A882;
   font-weight: 500;
   white-space: nowrap;
-  transition: background 0.2s, color 0.2s;
+  transition: color 0.2s, border-color 0.2s;
 }
 .day-chip .day-num { font-size: 15px; font-weight: 700; color: inherit; }
 .day-chip .day-weekday { font-size: 10px; color: inherit; opacity: 0.7; }
-.day-chip.active { background: #F9D5B8; color: #C4701A; }
-.day-chip.active .day-num { color: #C4701A; }
+.day-chip.active { background: #FFF8ED; color: #B05A10; border-color: #E8A070; }
+.day-chip.active .day-num { color: #B05A10; }
 
 /* ── Map ── */
 #page-map { position: relative; }
