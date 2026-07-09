@@ -34,6 +34,14 @@ function parseLatLng(url) {
   return null;
 }
 
+// SoCal bounding box：LA + SD + Orange County 全都在內
+const SOCAL_BOUNDS = { minLat: 31.0, maxLat: 35.5, minLng: -120.5, maxLng: -115.5 };
+
+function isInSoCal(lat, lng) {
+  return lat >= SOCAL_BOUNDS.minLat && lat <= SOCAL_BOUNDS.maxLat
+      && lng >= SOCAL_BOUNDS.minLng && lng <= SOCAL_BOUNDS.maxLng;
+}
+
 // ── Geocode place name via Nominatim (SoCal viewbox covers LA + SD) ──
 async function geocodeByName(name) {
   try {
@@ -43,7 +51,11 @@ async function geocodeByName(name) {
       { headers: { "Accept-Language": "en" } }
     );
     const data = await res.json();
-    if (data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    if (data.length > 0) {
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+      if (isInSoCal(lat, lng)) return { lat, lng };
+    }
   } catch(e) {}
   return null;
 }
@@ -784,7 +796,7 @@ function refreshMap() {
 
   for (let d = 1; d <= TOTAL_DAYS; d++) {
     const dayItems = itineraryData
-      .filter(i => i.day === d && i.lat && i.lng)
+      .filter(i => i.day === d && i.lat && i.lng && isInSoCal(i.lat, i.lng))
       .sort((a, b) => a.order - b.order);
 
     const color = DAY_COLORS[d - 1];
