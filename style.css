@@ -81,7 +81,7 @@ html, body {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: 32px;
+  padding-bottom: calc(var(--safe-bottom) + 16px);
   -webkit-overflow-scrolling: touch;
 }
 
