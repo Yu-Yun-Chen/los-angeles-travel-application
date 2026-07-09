@@ -39,7 +39,7 @@ async function geocodeByName(name) {
   try {
     const q = encodeURIComponent(name);
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${q}&viewbox=-120.5,31.0,-115.5,35.5&bounded=0&format=json&limit=1`,
+      `https://nominatim.openstreetmap.org/search?q=${q}&viewbox=-120.5,31.0,-115.5,35.5&bounded=1&format=json&limit=1`,
       { headers: { "Accept-Language": "en" } }
     );
     const data = await res.json();
